@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result - Plant Disease Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+
+<body>
+    <div class="container result-container fade-in">
+        <div class="header">
+            <h1>🌿 Diagnosis Result</h1>
+            <p>Analysis complete with AI precision</p>
+        </div>
+
+        {% if image_path %}
+        <img src="{{ url_for('static', filename='uploads/' + image_path) }}" alt="Uploaded Plant" class="result-image">
+        {% endif %}
+
+        <div class="prediction-box">
+            <h2>Detected Condition</h2>
+            <div class="disease-name">{{ disease_info.name }}</div>
+            <div class="confidence-badge">
+                <i class="fas fa-check-circle"></i> Confidence: {{ confidence }}%
+            </div>
+        </div>
+
+        <!-- Disease Description -->
+        <div class="info-section">
+            <h3><i class="fas fa-clipboard-list"></i> Diagnosis Details</h3>
+            <p>{{ disease_info.description }}</p>
+        </div>
+
+        <!-- Symptoms -->
+        <div class="info-section">
+            <h3><i class="fas fa-search-plus"></i> Symptoms Identified</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for symptom in disease_info.symptoms %}
+                <li style="margin-bottom: 10px; display: flex; align-items: start; gap: 10px;">
+                    <i class="fas fa-temperature-high" style="color: var(--accent-color); margin-top: 4px;"></i>
+                    <span>{{ symptom }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Treatments -->
+        <div class="info-section">
+            <h3><i class="fas fa-hand-holding-medical"></i> Treatment Plan</h3>
+            <div class="treatment-grid">
+                <div class="treatment-card">
+                    <h4><i class="fas fa-flask"></i> Chemical Control</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        {% for treatment in disease_info.treatments.chemical %}
+                        <li style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-dot-circle" style="font-size: 8px; color: var(--text-light);"></i>
+                            {{ treatment }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                <div class="treatment-card" style="border-left-color: var(--primary-color);">
+                    <h4><i class="fas fa-leaf"></i> Organic Control</h4>
+                    <ul style="list-style: none; padding: 0;">
+                        {% for treatment in disease_info.treatments.organic %}
+                        <li style="margin-bottom: 8px; display: flex; align-items: center; gap: 8px;">
+                            <i class="fas fa-check" style="font-size: 10px; color: var(--primary-color);"></i>
+                            {{ treatment }}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Medicines -->
+        <div class="info-section">
+            <h3><i class="fas fa-prescription-bottle-alt"></i> Recommended Products</h3>
+            <p style="margin-bottom: 15px;">Ask for these specific products at your local store:</p>
+            <div>
+                {% for medicine in disease_info.medicines %}
+                <span class="medicine-tag">
+                    <i class="fas fa-tag"></i> {{ medicine }}
+                </span>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Prevention -->
+        <div class="info-section">
+            <h3><i class="fas fa-shield-alt"></i> Future Prevention</h3>
+            <ul style="list-style: none; padding: 0;">
+                {% for tip in disease_info.prevention %}
+                <li style="margin-bottom: 10px; display: flex; align-items: start; gap: 10px;">
+                    <i class="fas fa-star" style="color: var(--secondary-color); margin-top: 4px;"></i>
+                    <span>{{ tip }}</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <!-- Store Locator -->
+        <div class="store-locator info-section" style="border-left: none; text-align: center;">
+            <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_ugv9521a.json" background="transparent"
+                speed="1" style="width: 150px; height: 150px; margin: 0 auto;" loop autoplay></lottie-player>
+            <h3 style="justify-content: center; margin-bottom: 15px;">Need Supplies?</h3>
+            <p style="margin-bottom: 25px;">Find certified pesticide and agricultural stores near your current location.
+            </p>
+
+            <button class="location-btn" onclick="findNearbyStores()">
+                <i class="fas fa-map-marked-alt"></i> Find Stores Near Me
+            </button>
+
+            <div id="storeResults" style="margin-top: 25px; text-align: left;"></div>
+        </div>
+
+        <div class="action-buttons">
+            <a href="{{ url_for('upload') }}" class="btn btn-primary" style="text-align: center; flex: 1;">
+                <i class="fas fa-camera"></i> Analyze Another
+            </a>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="text-align: center; flex: 1;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </div>
+
+    <script>
+        function findNearbyStores() {
+            const resultsDiv = document.getElementById('storeResults');
+            resultsDiv.innerHTML = '<div style="text-align: center; color: var(--primary-color);"><i class="fas fa-spinner fa-spin"></i> Getting your location...</div>';
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    function (position) {
+                        const lat = position.coords.latitude;
+                        const lon = position.coords.longitude;
+
+                        // Open Google Maps search for nearby pesticide/agricultural stores
+                        const searchQuery = 'pesticide store OR agricultural supply store';
+                        const mapsUrl = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}/@${lat},${lon},14z`;
+
+                        resultsDiv.innerHTML = `
+                            <div class="alert alert-success" style="animation: slideIn 0.5s ease;">
+                                <h4 style="margin-bottom: 10px;"><i class="fas fa-map-marker-alt"></i> Location Found!</h4>
+                                <p style="margin-bottom: 15px;">We've located nearby stores. Click below to view them on Google Maps.</p>
+                                <a href="${mapsUrl}" target="_blank" class="btn" style="display: block; text-align: center; text-decoration: none;">
+                                    <i class="fas fa-external-link-alt"></i> Open Google Maps
+                                </a>
+                            </div>
+                            <div class="alert" style="background: #e3f2fd; color: #1976d2; border: 1px solid #bbdefb;">
+                                <strong><i class="fas fa-lightbulb"></i> Pro Tip:</strong> Show the store owner the medicine names listed above!
+                            </div>
+                        `;
+                    },
+                    function (error) {
+                        let errorMessage = 'Unable to get location.';
+                        if (error.code === error.PERMISSION_DENIED) {
+                            errorMessage = 'Please allow location access to find stores.';
+                        }
+
+                        resultsDiv.innerHTML = `
+                            <div class="alert alert-error">
+                                <i class="fas fa-exclamation-triangle"></i> ${errorMessage}
+                                <br><br>
+                                <a href="https://www.google.com/maps/search/pesticide+stores+near+me" target="_blank" style="text-decoration: underline;">
+                                    Click here to search manually on Google Maps
+                                </a>
+                            </div>
+                        `;
+                    }
+                );
+            } else {
+                resultsDiv.innerHTML = `
+                    <div class="alert alert-error">
+                        <i class="fas fa-times-circle"></i> Geolocation is not supported by your browser.
+                    </div>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

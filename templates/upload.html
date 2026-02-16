@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload - Plant Disease Prediction</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+</head>
+
+<body>
+    <div class="container fade-in">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <div style="text-align: left;">
+                <h2 style="margin: 0;">Hello, {{ username }}! 👋</h2>
+                <p style="margin: 0;">Ready to diagnose?</p>
+            </div>
+            <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+
+        <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_j1adre6e.json" background="transparent"
+            speed="1" style="width: 200px; height: 200px; margin: 0 auto 20px;" loop autoplay></lottie-player>
+
+        <h1>Plant Diagnosis</h1>
+        <p>Upload a clear photo of your plant leaf to get an instant diagnosis and treatment plan.</p>
+
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <div class="upload-area" id="uploadArea">
+                <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                <h3>Drag & Drop or Click to Upload</h3>
+                <p>Supported formats: JPG, PNG, JPEG</p>
+                <div class="file-name" id="fileName"></div>
+                <input type="file" name="file" id="fileInput" accept=".png, .jpg, .jpeg" style="display: none;"
+                    required>
+            </div>
+
+            <button type="submit" class="btn" id="submitBtn" disabled>
+                <i class="fas fa-microscope"></i> Analyze Plant
+            </button>
+        </form>
+    </div>
+
+    <script>
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileName = document.getElementById('fileName');
+        const submitBtn = document.getElementById('submitBtn');
+
+        uploadArea.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files.length > 0) {
+                fileName.textContent = `Selected: ${fileInput.files[0].name}`;
+                submitBtn.disabled = false;
+
+                // Add success styling
+                uploadArea.style.borderColor = 'var(--secondary-color)';
+                uploadArea.style.background = 'rgba(150, 201, 61, 0.1)';
+            }
+        });
+
+        // Search features drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, highlight, false);
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            uploadArea.addEventListener(eventName, unhighlight, false);
+        });
+
+        function highlight(e) {
+            uploadArea.style.borderColor = 'var(--primary-color)';
+            uploadArea.style.background = 'rgba(0, 176, 155, 0.1)';
+            uploadArea.style.transform = 'scale(1.02)';
+        }
+
+        function unhighlight(e) {
+            uploadArea.style.borderColor = 'var(--primary-color)';
+            uploadArea.style.background = 'rgba(0, 176, 155, 0.05)';
+            uploadArea.style.transform = 'scale(1)';
+        }
+
+        uploadArea.addEventListener('drop', handleDrop, false);
+
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            fileInput.files = files;
+
+            if (files.length > 0) {
+                fileName.textContent = `Selected: ${files[0].name}`;
+                submitBtn.disabled = false;
+
+                // Add success styling
+                uploadArea.style.borderColor = 'var(--secondary-color)';
+                uploadArea.style.background = 'rgba(150, 201, 61, 0.1)';
+            }
+        }
+    </script>
+</body>
+
+</html>
