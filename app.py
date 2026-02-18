@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 import os
 from functools import wraps
-from database import init_db, register_user, validate_login, get_user_by_email
+from database import init_db, register_user, validate_login
 from disease_info import get_disease_info
 import tensorflow as tf
 import numpy as np
@@ -55,10 +55,17 @@ def login_required(f):
     return decorated_function
 
 @app.route('/')
-def home():
-    if 'user_id' in session:
-        return redirect(url_for('upload'))
-    return redirect(url_for('login'))
+def index():
+    return render_template('home.html', logged_in='user_id' in session)
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if session.get('role') != 'admin':
+            flash('Access denied!', 'error')
+            return redirect(url_for('home')) # Redirect to index/home
+        return f(*args, **kwargs)
+    return decorated_function
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -66,22 +73,38 @@ def login():
         username_or_email = request.form.get('username')
         password = request.form.get('password')
         
-        # Try login with username first
         success, user = validate_login(username_or_email, password)
-        
-        # If username login fails, try email
-        if not success:
-            success, user = get_user_by_email(username_or_email, password)
         
         if success:
             session['user_id'] = user['id']
             session['username'] = user['username']
+            session['role'] = user['role']
             flash('Login successful!', 'success')
+            
+            if user['role'] == 'admin':
+                return redirect(url_for('admin'))
             return redirect(url_for('upload'))
         else:
-            flash('Invalid username/email or password!', 'error')
+            flash('Invalid credentials!', 'error')
     
     return render_template('login.html')
+
+@app.route('/admin')
+@login_required
+@admin_required
+def admin():
+    from database import get_all_users
+    users = get_all_users()
+    return render_template('admin.html', users=users, username=session.get('username'))
+
+@app.route('/admin/delete/<int:user_id>')
+@login_required
+@admin_required
+def admin_delete_user(user_id):
+    from database import delete_user
+    delete_user(user_id)
+    flash('User deleted successfully!', 'success')
+    return redirect(url_for('admin'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -106,8 +129,8 @@ def register():
 @app.route('/logout')
 def logout():
     session.clear()
-    flash('You have been logged out.', 'success')
-    return redirect(url_for('login'))
+    flash('Logged out.', 'success')
+    return redirect(url_for('index'))
 
 @app.route('/upload', methods=['GET', 'POST'])
 @login_required
@@ -139,14 +162,17 @@ def upload():
                     img = image.load_img(filepath, target_size=(IMG_SIZE, IMG_SIZE))
                     img_array = image.img_to_array(img)
                     img_array = np.expand_dims(img_array, axis=0)
-                    img_array = img_array / 255.0
+                    
+                    # MobileNetV2 specific preprocessing
+                    from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
+                    img_array = preprocess_input(img_array)
                     
                     # Prediction
                     predictions = model.predict(img_array)
                     predicted_class = class_names[np.argmax(predictions)]
                     confidence = np.max(predictions) * 100
                     
-                    # Store in session
+                    # Store in session exactly as predicted (matches mapping)
                     session['prediction'] = predicted_class
                     session['confidence'] = f"{confidence:.2f}"
                     session['image_path'] = filename

@@ -4,113 +4,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload - Plant Disease Prediction</title>
+    <title>Upload | Plant Disease AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    <style>
+        .loading-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            z-index: 9999;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .loading-overlay.active {
+            display: flex;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="container fade-in">
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-            <div style="text-align: left;">
-                <h2 style="margin: 0;">Hello, {{ username }}! 👋</h2>
-                <p style="margin: 0;">Ready to diagnose?</p>
+    <div class="loading-overlay" id="loadingOverlay">
+        <i class="fas fa-leaf fa-spin" style="font-size: 3rem; color: var(--primary); margin-bottom: 20px;"></i>
+        <h2 style="color: var(--primary);">Analyzing Leaf...</h2>
+        <p>Our AI is examining the disease patterns.</p>
+    </div>
+
+    <div class="app-container">
+        <div class="container fade-in">
+            <div
+                style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 40px; text-align: left;">
+                <div>
+                    <h2 style="font-size: 1.5rem; margin-bottom: 5px;">Hello, {{ username }}!</h2>
+                    <p style="margin: 0; color: var(--text-muted);">Ready to diagnose today?</p>
+                </div>
+                <a href="{{ url_for('logout') }}" class="btn-secondary"
+                    style="padding: 10px 20px; font-size: 0.85rem; border-radius: 10px; text-decoration: none;">
+                    <i class="fas fa-sign-out-alt"></i> Logout
+                </a>
             </div>
-            <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 8px 15px; font-size: 0.9rem;">
-                <i class="fas fa-sign-out-alt"></i> Logout
-            </a>
+
+            <i class="fas fa-leaf"
+                style="font-size: 5rem; color: var(--secondary); margin: 0 auto 30px; display: block;"></i>
+
+            <h1>Plant Diagnosis</h1>
+            <p class="subtitle">Upload a photo of your plant leaf for an instant AI diagnosis.</p>
+
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}" style="margin-bottom: 25px;">
+                <i class="fas fa-info-circle"></i> {{ message }}
+            </div>
+            {% endfor %}
+            {% endif %}
+            {% endwith %}
+
+            <form action="{{ url_for('upload') }}" method="POST" enctype="multipart/form-data" id="uploadForm">
+                <div class="upload-area" id="uploadArea"
+                    style="cursor: pointer; border: 2px dashed var(--secondary); transition: var(--transition-smooth); padding: 50px 20px;">
+                    <i class="fas fa-cloud-upload-alt" id="statusIcon"
+                        style="font-size: 3rem; color: var(--secondary); margin-bottom: 15px; display: block;"></i>
+                    <h3 id="statusTitle">Click or Drag Image</h3>
+                    <p id="statusText">PNG, JPG or JPEG supported</p>
+                    <input type="file" name="file" id="fileInput" accept="image/*" style="display: none;" required>
+                </div>
+
+                <div id="fileInfo"
+                    style="margin: 20px 0; display: none; padding: 15px; background: rgba(27, 77, 62, 0.05); border-radius: 12px; font-weight: 600; color: var(--primary);">
+                    <i class="fas fa-image"></i> <span id="fileNameDisplay"></span>
+                </div>
+
+                <button type="submit" class="btn" id="submitBtn" disabled style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-microscope"></i> Start Analysis
+                </button>
+            </form>
         </div>
-
-        <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_j1adre6e.json" background="transparent"
-            speed="1" style="width: 200px; height: 200px; margin: 0 auto 20px;" loop autoplay></lottie-player>
-
-        <h1>Plant Diagnosis</h1>
-        <p>Upload a clear photo of your plant leaf to get an instant diagnosis and treatment plan.</p>
-
-        <form method="POST" enctype="multipart/form-data" id="uploadForm">
-            <div class="upload-area" id="uploadArea">
-                <i class="fas fa-cloud-upload-alt upload-icon"></i>
-                <h3>Drag & Drop or Click to Upload</h3>
-                <p>Supported formats: JPG, PNG, JPEG</p>
-                <div class="file-name" id="fileName"></div>
-                <input type="file" name="file" id="fileInput" accept=".png, .jpg, .jpeg" style="display: none;"
-                    required>
-            </div>
-
-            <button type="submit" class="btn" id="submitBtn" disabled>
-                <i class="fas fa-microscope"></i> Analyze Plant
-            </button>
-        </form>
     </div>
 
     <script>
         const uploadArea = document.getElementById('uploadArea');
         const fileInput = document.getElementById('fileInput');
-        const fileName = document.getElementById('fileName');
         const submitBtn = document.getElementById('submitBtn');
+        const uploadForm = document.getElementById('uploadForm');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const statusIcon = document.getElementById('statusIcon');
+        const statusTitle = document.getElementById('statusTitle');
+        const statusText = document.getElementById('statusText');
+        const loadingOverlay = document.getElementById('loadingOverlay');
 
-        uploadArea.addEventListener('click', () => {
-            fileInput.click();
-        });
-
-        fileInput.addEventListener('change', () => {
-            if (fileInput.files.length > 0) {
-                fileName.textContent = `Selected: ${fileInput.files[0].name}`;
+        function handleFiles(files) {
+            if (files && files.length > 0) {
+                const file = files[0];
+                fileNameDisplay.textContent = file.name;
+                fileInfo.style.display = 'block';
                 submitBtn.disabled = false;
 
-                // Add success styling
-                uploadArea.style.borderColor = 'var(--secondary-color)';
-                uploadArea.style.background = 'rgba(150, 201, 61, 0.1)';
+                // Success styling
+                uploadArea.style.borderColor = 'var(--primary)';
+                uploadArea.style.background = 'rgba(27, 77, 62, 0.05)';
+                statusIcon.className = 'fas fa-check-circle';
+                statusIcon.style.color = 'var(--primary)';
+                statusTitle.textContent = 'Image Ready';
+                statusTitle.style.color = 'var(--primary)';
+                statusText.textContent = 'Click "Start Analysis" to proceed';
             }
-        });
-
-        // Search features drag and drop
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults(e) {
-            e.preventDefault();
-            e.stopPropagation();
         }
 
-        ['dragenter', 'dragover'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, highlight, false);
+        uploadArea.onclick = () => fileInput.click();
+
+        fileInput.onchange = () => {
+            handleFiles(fileInput.files);
+        };
+
+        // Drag and drop
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+            uploadArea.addEventListener(name, e => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
         });
 
-        ['dragleave', 'drop'].forEach(eventName => {
-            uploadArea.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            uploadArea.style.borderColor = 'var(--primary-color)';
-            uploadArea.style.background = 'rgba(0, 176, 155, 0.1)';
+        uploadArea.ondragover = () => {
+            uploadArea.style.background = 'rgba(27, 77, 62, 0.1)';
             uploadArea.style.transform = 'scale(1.02)';
-        }
+        };
 
-        function unhighlight(e) {
-            uploadArea.style.borderColor = 'var(--primary-color)';
-            uploadArea.style.background = 'rgba(0, 176, 155, 0.05)';
+        uploadArea.ondragleave = () => {
+            uploadArea.style.background = 'transparent';
             uploadArea.style.transform = 'scale(1)';
-        }
+        };
 
-        uploadArea.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const files = dt.files;
-            fileInput.files = files;
-
+        uploadArea.ondrop = (e) => {
+            const files = e.dataTransfer.files;
             if (files.length > 0) {
-                fileName.textContent = `Selected: ${files[0].name}`;
-                submitBtn.disabled = false;
-
-                // Add success styling
-                uploadArea.style.borderColor = 'var(--secondary-color)';
-                uploadArea.style.background = 'rgba(150, 201, 61, 0.1)';
+                // Transfer files to input for form submission
+                const dt = new DataTransfer();
+                dt.items.add(files[0]);
+                fileInput.files = dt.files;
+                handleFiles(files);
             }
-        }
+            uploadArea.style.transform = 'scale(1)';
+        };
+
+        uploadForm.onsubmit = () => {
+            loadingOverlay.classList.add('active');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        };
     </script>
 </body>
 

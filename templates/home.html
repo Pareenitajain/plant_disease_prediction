@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Disease AI | Home</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+
+<body>
+    <header class="hero-section cinematic fade-in">
+        <div class="hero-content">
+            <i class="fas fa-leaf hero-main-icon"></i>
+            <h1 class="hero-title">Protect Your Plants with AI</h1>
+            <p class="hero-subtitle">Instant, accurate diagnosis for crop diseases using state-of-the-art Deep Learning
+                technology.</p>
+
+            <div class="hero-cta">
+                {% if logged_in %}
+                <a href="{{ url_for('upload') }}" class="btn btn-premium">
+                    <i class="fas fa-desktop"></i> Go to Dashboard
+                </a>
+                {% else %}
+                <a href="{{ url_for('login') }}" class="btn btn-premium">
+                    <i class="fas fa-sign-in-alt"></i> Get Started
+                </a>
+                <a href="{{ url_for('register') }}" class="btn btn-outline-premium">
+                    <i class="fas fa-user-plus"></i> Join Community
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </header>
+
+    <main class="landing-main">
+        <div class="features-grid fade-in">
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-bolt"></i>
+                </div>
+                <h3>Instant Results</h3>
+                <p>Get your diagnosis in seconds with our high-performance AI models trained for accuracy.</p>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <h3>Treatment Plans</h3>
+                <p>Receive detailed chemical and organic treatment strategies tailored to your specific plant.</p>
+            </div>
+            <div class="feature-card glass-card">
+                <div class="feature-icon-wrapper">
+                    <i class="fas fa-map-marker-alt"></i>
+                </div>
+                <h3>Nearby Stores</h3>
+                <p>Find local agricultural suppliers for the recommended medicines and equipment instantly.</p>
+            </div>
+        </div>
+    </main>
+
+    <footer class="glass-footer">
+        <div class="footer-content">
+            <p>&copy; 2025 Plant Disease AI. Empowering Farmers with Advanced Intelligence.</p>
+            <div class="footer-links">
+                <a href="#"><i class="fab fa-twitter"></i></a>
+                <a href="#"><i class="fab fa-facebook"></i></a>
+                <a href="#"><i class="fab fa-instagram"></i></a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

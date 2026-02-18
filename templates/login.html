@@ -4,50 +4,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Plant Disease Prediction</title>
+    <title>Login | Plant Disease AI</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 </head>
 
 <body>
-    <div class="container fade-in">
-        <lottie-player src="https://assets2.lottiefiles.com/packages/lf20_4kji20Y93r.json" background="transparent"
-            speed="1" style="width: 150px; height: 150px; margin: 0 auto;" loop autoplay></lottie-player>
+    <div class="app-container">
+        <div class="container fade-in">
+            <i class="fas fa-leaf"
+                style="font-size: 4rem; color: var(--secondary); margin-bottom: 30px; display: block;"></i>
 
-        <h1>Welcome Back</h1>
-        <p>Login to continue diagnosing your plants</p>
+            <h1>Welcome Back</h1>
+            <p class="subtitle">Join our community of growers and protect your harvest today.</p>
+            <a href="{{ url_for('index') }}"
+                style="display: block; margin-bottom: 25px; color: var(--primary); font-weight: 600; text-decoration: none;">
+                <i class="fas fa-arrow-left"></i> Back to Home
+            </a>
 
-        {% with messages = get_flashed_messages(with_categories=true) %}
-        {% if messages %}
-        {% for category, message in messages %}
-        <div class="alert alert-{{ category }}">
-            {% if category == 'error' %}
-            <i class="fas fa-exclamation-circle"></i>
-            {% else %}
-            <i class="fas fa-check-circle"></i>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+            {% for category, message in messages %}
+            <div class="alert alert-{{ category }}">
+                {% if category == 'error' %}
+                <i class="fas fa-exclamation-circle"></i>
+                {% else %}
+                <i class="fas fa-check-circle"></i>
+                {% endif %}
+                {{ message }}
+            </div>
+            {% endfor %}
             {% endif %}
-            {{ message }}
+            {% endwith %}
+
+            <form action="{{ url_for('login') }}" method="POST">
+                <div class="input-group">
+                    <input type="text" name="username" placeholder="Username or Email" required>
+                </div>
+                <div class="input-group">
+                    <input type="password" name="password" placeholder="Password" required>
+                </div>
+                <button type="submit">
+                    <i class="fas fa-sign-in-alt"></i> Login to Dashboard
+                </button>
+
+                <p style="margin-top: 30px; font-size: 0.95rem; color: var(--text-muted);">
+                    New here? <a href="{{ url_for('register') }}"
+                        style="color: var(--secondary); font-weight: 600;">Create an account</a>
+                </p>
+            </form>
         </div>
-        {% endfor %}
-        {% endif %}
-        {% endwith %}
-
-        <form action="{{ url_for('login') }}" method="POST">
-            <div class="input-group">
-                <input type="text" name="username" placeholder="Username or Email" required>
-            </div>
-            <div class="input-group">
-                <input type="password" name="password" placeholder="Password" required>
-            </div>
-            <button type="submit">
-                <i class="fas fa-sign-in-alt"></i> Login
-            </button>
-
-            <p style="margin-top: 20px;">
-                Don't have an account? <a href="{{ url_for('register') }}">Register here</a>
-            </p>
-        </form>
     </div>
 </body>
 

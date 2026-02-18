@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import classification_report, confusion_matrix
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 
 # =========================
 # PATHS (IMPORTANT)
@@ -17,8 +18,8 @@ BATCH_SIZE = 32
 # Load trained model
 model = tf.keras.models.load_model(MODEL_PATH)
 
-# Test data generator
-test_datagen = ImageDataGenerator(rescale=1./255)
+# Test data generator with MobileNetV2 preprocessing
+test_datagen = ImageDataGenerator(preprocessing_function=preprocess_input)
 
 test_generator = test_datagen.flow_from_directory(
     TEST_DIR,
